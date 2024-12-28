@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Reactific Software LLC
+ * Copyright 2023 Ossum Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,44 +15,63 @@
  */
 
 import org.jetbrains.sbtidea.Keys.IntelliJPlatform
-import sbt.Keys.scalaVersion
+import sbt.Keys.*
 import sbtbuildinfo.BuildInfoOption.{BuildTime, ToMap}
+import com.ossuminc.sbt.OssumIncPlugin
+import sbtbuildinfo.BuildInfoPlugin.autoImport.buildInfoKeys
+import sbtbuildinfo.BuildInfoPlugin.autoImport.buildInfoOptions
 
-ThisBuild / maintainer := "reid@reactific.com"
-ThisBuild / organizationName := "Reactific Software LLC"
-ThisBuild / startYear := Some(2019)
-ThisBuild / licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
+enablePlugins(OssumIncPlugin)
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 (Global / excludeLintKeys) ++=
   Set(buildInfoPackage, buildInfoKeys, buildInfoOptions, mainClass, maintainer,
     intellijAttachSources)
 
-ThisBuild / versionScheme := Option("semver-spec")
-ThisBuild / dynverVTagPrefix := false
 
-// NEVER  SET  THIS: version := "0.1"
-// IT IS HANDLED BY: sbt-dynver
-ThisBuild / dynverSeparator := "-"
-ThisBuild / organization := "com.reactific"
-ThisBuild / scalaVersion := "2.13.7"
-buildInfoOptions := Seq(ToMap, BuildTime)
-buildInfoKeys := Seq[BuildInfoKey](
-  name,
-  normalizedName,
-  description,
-  homepage,
-  startYear,
-  organization,
-  organizationName,
-  organizationHomepage,
-  version,
-  scalaVersion,
-  sbtVersion
-)
+lazy val root = Root("riddl-idea-plugin", "ossuminc", "com.ossuminc.riddl.idea", startYr=2023)
+  .configure(With.noPublishing, With.git, With.dynver)
+  .aggregate(plugin)
 
-lazy val scala2_13_Options = Seq(
-  "-target:17",
+lazy val plugin = Module("plugin", "riddl-idea-plugin")
+  .enablePlugins(SbtIdeaPlugin)
+  .configure(With.typical, With.riddl("1.0.0-RC1"))
+  .configure(With.packagingUniversal("reid@ossuminc.com","riddl-idea-plugin",
+    "A plugin to support easier editing of RIDDL models in IntelliJ", "")
+  )
+  .settings(
+    scalaVersion := "3.4.3",
+    // scalacOptions := scala2_13_Options,
+    intellijPluginName := "riddl-idea-plugin",
+    intellijBuild      := "242.x",
+    intellijPlatform   := IntelliJPlatform.IdeaCommunity,
+    intellijPlugins    += "com.intellij.java".toPlugin,
+    intellijPlugins    += "com.intellij.properties".toPlugin,
+    intellijAttachSources := true,
+    Compile / javacOptions ++= "--release" :: "17" :: Nil,
+    libraryDependencies ++= Seq(
+      "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources()
+    ),
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
+    Test / unmanagedResourceDirectories    += baseDirectory.value / "testResources",
+    buildInfoOptions := Seq(ToMap, BuildTime),
+    buildInfoKeys := Seq[BuildInfoKey](
+      name,
+      normalizedName,
+      description,
+      homepage,
+      startYear,
+      organization,
+      organizationName,
+      organizationHomepage,
+      version,
+      scalaVersion,
+      sbtVersion
+    )
+  )
+
+val scala2_13_Options = Seq(
+  "-target:21",
   // "-Ypatmat-exhaust-depth 40", Zinc can't handle this :(
   "-Xsource:3",
   "-Wdead-code",
@@ -75,21 +94,3 @@ lazy val scala2_13_Options = Seq(
   // interface that is not explicitly annotated with @FunctionalInterface.
   "-Xlint:deprecation" // Enable linted deprecations.
 )
-
-lazy val `riddl-idea-plugin` = project.in(file("."))
-  .enablePlugins(SbtIdeaPlugin)
-  .settings(
-    ThisBuild / intellijPluginName := "riddl-idea-plugin",
-    ThisBuild / intellijBuild      := "213.6461.79",
-    ThisBuild / intellijPlatform   := IntelliJPlatform.IdeaCommunity,
-    intellijPlugins       += "com.intellij.properties".toPlugin,
-    ThisBuild / intellijAttachSources := true,
-    Compile / javacOptions ++= "--release" :: "17" :: Nil,
-    libraryDependencies ++= Seq(
-      "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources()
-    ),
-    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
-    Test / unmanagedResourceDirectories    += baseDirectory.value / "testResources",
-    libraryDependencies ++= Seq()
-
-  )
