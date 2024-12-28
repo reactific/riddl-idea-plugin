@@ -1,0 +1,34 @@
+<idea-plugin>
+    <id>com.ossuminc.riddl.plugin</id>
+    <name>RIDDL IDEA Plugin</name>
+    <version>${version}</version>
+    <vendor>Ossum Inc</vendor>
+    <description>A plugin for the IntelliJ platform to provide assistance with RIDDL syntax.</description>
+    <idea-version since-build="213.0"/>
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.properties</depends>
+
+    <resource-bundle>messages.RiddlSyntaxPlugin</resource-bundle>
+
+    <actions>
+        <action id="org.jetbrains.scala.samples.actions.PopupDialogAction"
+                class="com.ossuminc.riddl.idea.actions.PopupDialogAction">
+            <add-to-group group-id="ToolsMenu" anchor="first"/>
+        </action>
+    </actions>
+
+    <applicationListeners>
+        <listener class="com.ossuminc.riddl.idea.listeners.FileOpenedListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    </applicationListeners>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
+        <toolWindow factoryClass="com.ossuminc.riddl.idea.ui.RiddlToolWindowFactory" id="RiddlToolWindow"
+                    anchor="bottom"/>
+        <completion.contributor
+                implementationClass="com.ossuminc.riddl.idea.completion.RiddlCompletionContributor"
+                language="Properties"/>
+    </extensions>
+
+</idea-plugin>
